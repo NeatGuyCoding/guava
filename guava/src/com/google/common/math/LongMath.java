@@ -66,7 +66,7 @@ public final class LongMath {
   @Beta
   public static long ceilingPowerOfTwo(long x) {
     checkPositive("x", x);
-    if (x > (1L << (Long.SIZE - 2))) {
+    if (x > MAX_SIGNED_POWER_OF_TWO) {
       throw new ArithmeticException("ceilingPowerOfTwo(" + x + ") is not representable as a long");
     }
     return 1L << -Long.numberOfLeadingZeros(x - 1);
@@ -977,6 +977,62 @@ public final class LongMath {
     // The alternative (x + y) / 2 fails for large values.
     // The alternative (x + y) >>> 1 fails for negative values.
     return (x & y) + ((x ^ y) >> 1);
+  }
+  
+  /*
+   * This bitmask is used as an optimization for cheaply testing for divisiblity by 2, 3, or 5.
+   * Each bit is set to 1 for all remainders that indicate divisibility by 2, 3, or 5.
+   * 1, 7, 11, 13, 17, 19, 23, 29 are set to 0. 30 and up are 0 because they won't be hit.
+   * Bit offsets:       25    20    15    10     5     0
+   *            0b00_01111_10111_01011_10101_11011_11101;
+   * We can't actually use the binary form because it has to work in Java 6.
+   */
+  private static final int SIEVE_30 = 0x1F75D77D;
+
+  /**
+   * Returns {@code true} if {@code n} is a
+   * <a href="http://mathworld.wolfram.com/PrimeNumber.html">prime number</a>: an integer <i>greater
+   * than one</i> that cannot be factored into a product of <i>smaller</i> positive integers.
+   * Returns {@code false} if {@code n} is zero, one, or a composite number (one which <i>can</i>
+   * be factored into smaller positive integers).
+   *
+   * <p>To test larger numbers, use {@link BigInteger#isProbablePrime}.
+   *
+   * @throws IllegalArgumentException if {@code n} is negative
+   * @since 20.0
+   */
+  @GwtIncompatible // TODO
+  @Beta
+  public static boolean isPrime(long n) {
+    if (n < 2) {
+      checkNonNegative("n", n);
+      return false;
+    }
+    if (n == 2 || n == 3 || n == 5 || n == 7 || n == 11 || n == 13) {
+      return true;
+    }
+    
+    if ((SIEVE_30 & (1 << (n % 30))) != 0) {
+      return false;
+    }
+    if (n % 7 == 0 || n % 11 == 0 || n % 13 == 0) {
+      return false;
+    }
+    if (n < 17 * 17) {
+      return true;
+    }
+
+    for (long[] baseSet : millerRabinBaseSets) {
+      if (n <= baseSet[0]) {
+        for (int i = 1; i < baseSet.length; i++) {
+          if (!MillerRabinTester.test(baseSet[i], n)) {
+            return false;
+          }
+        }
+        return true;
+      }
+    }
+    throw new AssertionError();
   }
 
   /*

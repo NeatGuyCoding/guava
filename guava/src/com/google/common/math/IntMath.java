@@ -61,7 +61,7 @@ public final class IntMath {
    * @throws IllegalArgumentException if {@code x <= 0}
    * @throws ArithmeticException of the next-higher power of two is not representable as an
    *         {@code int}, i.e. when {@code x > 2^30}
-   * @since 20.0
+   * @since 20.0        
    */
   @Beta
   public static int ceilingPowerOfTwo(int x) {
@@ -705,6 +705,24 @@ public final class IntMath {
     // The alternative (x + y) / 2 fails for large values.
     // The alternative (x + y) >>> 1 fails for negative values.
     return (x & y) + ((x ^ y) >> 1);
+  }
+
+  /**
+   * Returns {@code true} if {@code n} is a
+   * <a href="http://mathworld.wolfram.com/PrimeNumber.html">prime number</a>: an integer <i>greater
+   * than one</i> that cannot be factored into a product of <i>smaller</i> positive integers.
+   * Returns {@code false} if {@code n} is zero, one, or a composite number (one which <i>can</i>
+   * be factored into smaller positive integers).
+   *
+   * <p>To test larger numbers, use {@link LongMath#isPrime} or {@link BigInteger#isProbablePrime}.
+   *
+   * @throws IllegalArgumentException if {@code n} is negative
+   * @since 20.0
+   */
+  @GwtIncompatible // TODO
+  @Beta
+  public static boolean isPrime(int n) {
+    return LongMath.isPrime(n);
   }
 
   private IntMath() {}

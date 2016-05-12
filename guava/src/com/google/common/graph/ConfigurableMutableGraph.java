@@ -22,11 +22,9 @@ import static com.google.common.graph.GraphErrorMessageUtils.SELF_LOOPS_NOT_ALLO
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 
-import java.util.Map;
-
 /**
- * Configurable implementation of {@link Graph} that supports both directed and undirected graphs.
- * Instances of this class should be constructed with {@link GraphBuilder}.
+ * Configurable implementation of {@link MutableGraph} that supports both directed and undirected
+ * graphs. Instances of this class should be constructed with {@link GraphBuilder}.
  *
  * <p>Time complexities for mutation methods are all O(1) except for {@code removeNode(N node)},
  * which is in O(d_node) where d_node is the degree of {@code node}.
@@ -37,21 +35,14 @@ import java.util.Map;
  * @param <N> Node parameter type
  */
 // TODO(b/24620028): Enable this class to support sorted nodes/edges.
-class ConfigurableGraph<N> extends AbstractConfigurableGraph<N> implements MutableGraph<N> {
+final class ConfigurableMutableGraph<N>
+    extends AbstractConfigurableGraph<N> implements MutableGraph<N> {
+
   /**
    * Constructs a mutable graph with the properties specified in {@code builder}.
    */
-  ConfigurableGraph(GraphBuilder<? super N> builder) {
+  ConfigurableMutableGraph(GraphBuilder<? super N> builder) {
     super(builder);
-  }
-
-  /**
-   * Constructs a graph with the properties specified in {@code builder}, initialized with
-   * the given node maps. May be used for either mutable or immutable graphs.
-   */
-  ConfigurableGraph(GraphBuilder<? super N> builder,
-      Map<N, NodeAdjacencies<N>> nodeConnections) {
-    super(builder, nodeConnections);
   }
 
   @Override
