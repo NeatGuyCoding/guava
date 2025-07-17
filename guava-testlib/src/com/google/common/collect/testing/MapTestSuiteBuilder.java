@@ -17,6 +17,7 @@
 package com.google.common.collect.testing;
 
 import static com.google.common.collect.testing.DerivedCollectionGenerators.keySetGenerator;
+import static com.google.common.collect.testing.Helpers.copyToSet;
 
 import com.google.common.annotations.GwtIncompatible;
 import com.google.common.collect.testing.DerivedCollectionGenerators.MapEntrySetGenerator;
@@ -26,60 +27,80 @@ import com.google.common.collect.testing.features.CollectionSize;
 import com.google.common.collect.testing.features.Feature;
 import com.google.common.collect.testing.features.MapFeature;
 import com.google.common.collect.testing.testers.MapClearTester;
+import com.google.common.collect.testing.testers.MapComputeIfAbsentTester;
+import com.google.common.collect.testing.testers.MapComputeIfPresentTester;
+import com.google.common.collect.testing.testers.MapComputeTester;
 import com.google.common.collect.testing.testers.MapContainsKeyTester;
 import com.google.common.collect.testing.testers.MapContainsValueTester;
 import com.google.common.collect.testing.testers.MapCreationTester;
 import com.google.common.collect.testing.testers.MapEntrySetTester;
 import com.google.common.collect.testing.testers.MapEqualsTester;
+import com.google.common.collect.testing.testers.MapForEachTester;
+import com.google.common.collect.testing.testers.MapGetOrDefaultTester;
 import com.google.common.collect.testing.testers.MapGetTester;
 import com.google.common.collect.testing.testers.MapHashCodeTester;
 import com.google.common.collect.testing.testers.MapIsEmptyTester;
+import com.google.common.collect.testing.testers.MapMergeTester;
 import com.google.common.collect.testing.testers.MapPutAllTester;
+import com.google.common.collect.testing.testers.MapPutIfAbsentTester;
 import com.google.common.collect.testing.testers.MapPutTester;
+import com.google.common.collect.testing.testers.MapRemoveEntryTester;
 import com.google.common.collect.testing.testers.MapRemoveTester;
+import com.google.common.collect.testing.testers.MapReplaceAllTester;
+import com.google.common.collect.testing.testers.MapReplaceEntryTester;
+import com.google.common.collect.testing.testers.MapReplaceTester;
 import com.google.common.collect.testing.testers.MapSerializationTester;
 import com.google.common.collect.testing.testers.MapSizeTester;
 import com.google.common.collect.testing.testers.MapToStringTester;
 import com.google.common.testing.SerializableTester;
-
-import junit.framework.TestSuite;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import junit.framework.TestSuite;
 
 /**
- * Creates, based on your criteria, a JUnit test suite that exhaustively tests
- * a Map implementation.
+ * Creates, based on your criteria, a JUnit test suite that exhaustively tests a Map implementation.
  *
  * @author George van den Driessche
  */
 @GwtIncompatible
 public class MapTestSuiteBuilder<K, V>
     extends PerCollectionSizeTestSuiteBuilder<
-        MapTestSuiteBuilder<K, V>, TestMapGenerator<K, V>, Map<K, V>, Map.Entry<K, V>> {
+        MapTestSuiteBuilder<K, V>, TestMapGenerator<K, V>, Map<K, V>, Entry<K, V>> {
   public static <K, V> MapTestSuiteBuilder<K, V> using(TestMapGenerator<K, V> generator) {
     return new MapTestSuiteBuilder<K, V>().usingGenerator(generator);
   }
 
-  @SuppressWarnings("unchecked") // Class parameters must be raw.
+  @SuppressWarnings("rawtypes") // class literals
   @Override
   protected List<Class<? extends AbstractTester>> getTesters() {
     return Arrays.<Class<? extends AbstractTester>>asList(
         MapClearTester.class,
+        MapComputeTester.class,
+        MapComputeIfAbsentTester.class,
+        MapComputeIfPresentTester.class,
         MapContainsKeyTester.class,
         MapContainsValueTester.class,
         MapCreationTester.class,
         MapEntrySetTester.class,
         MapEqualsTester.class,
+        MapForEachTester.class,
         MapGetTester.class,
+        MapGetOrDefaultTester.class,
         MapHashCodeTester.class,
         MapIsEmptyTester.class,
+        MapMergeTester.class,
         MapPutTester.class,
         MapPutAllTester.class,
+        MapPutIfAbsentTester.class,
         MapRemoveTester.class,
+        MapRemoveEntryTester.class,
+        MapReplaceTester.class,
+        MapReplaceAllTester.class,
+        MapReplaceEntryTester.class,
         MapSerializationTester.class,
         MapSizeTester.class,
         MapToStringTester.class);
@@ -88,7 +109,7 @@ public class MapTestSuiteBuilder<K, V>
   @Override
   protected List<TestSuite> createDerivedSuites(
       FeatureSpecificTestSuiteBuilder<
-              ?, ? extends OneSizeTestContainerGenerator<Map<K, V>, Map.Entry<K, V>>>
+              ?, ? extends OneSizeTestContainerGenerator<Map<K, V>, Entry<K, V>>>
           parentBuilder) {
     // TODO: Once invariant support is added, supply invariants to each of the
     // derived suites, to check that mutations to the derived collections are
@@ -103,6 +124,8 @@ public class MapTestSuiteBuilder<K, V>
               .withFeatures(computeReserializedMapFeatures(parentBuilder.getFeatures()))
               .named(parentBuilder.getName() + " reserialized")
               .suppressing(parentBuilder.getSuppressedTests())
+              .withSetUp(parentBuilder.getSetUp())
+              .withTearDown(parentBuilder.getTearDown())
               .createTestSuite());
     }
 
@@ -112,6 +135,8 @@ public class MapTestSuiteBuilder<K, V>
             .withFeatures(computeEntrySetFeatures(parentBuilder.getFeatures()))
             .named(parentBuilder.getName() + " entrySet")
             .suppressing(parentBuilder.getSuppressedTests())
+            .withSetUp(parentBuilder.getSetUp())
+            .withTearDown(parentBuilder.getTearDown())
             .createTestSuite());
 
     derivedSuites.add(
@@ -119,6 +144,8 @@ public class MapTestSuiteBuilder<K, V>
             .withFeatures(computeKeySetFeatures(parentBuilder.getFeatures()))
             .named(parentBuilder.getName() + " keys")
             .suppressing(parentBuilder.getSuppressedTests())
+            .withSetUp(parentBuilder.getSetUp())
+            .withTearDown(parentBuilder.getTearDown())
             .createTestSuite());
 
     derivedSuites.add(
@@ -127,13 +154,15 @@ public class MapTestSuiteBuilder<K, V>
             .named(parentBuilder.getName() + " values")
             .withFeatures(computeValuesCollectionFeatures(parentBuilder.getFeatures()))
             .suppressing(parentBuilder.getSuppressedTests())
+            .withSetUp(parentBuilder.getSetUp())
+            .withTearDown(parentBuilder.getTearDown())
             .createTestSuite());
 
     return derivedSuites;
   }
 
-  protected SetTestSuiteBuilder<Map.Entry<K, V>> createDerivedEntrySetSuite(
-      TestSetGenerator<Map.Entry<K, V>> entrySetGenerator) {
+  protected SetTestSuiteBuilder<Entry<K, V>> createDerivedEntrySetSuite(
+      TestSetGenerator<Entry<K, V>> entrySetGenerator) {
     return SetTestSuiteBuilder.using(entrySetGenerator);
   }
 
@@ -147,7 +176,7 @@ public class MapTestSuiteBuilder<K, V>
   }
 
   private static Set<Feature<?>> computeReserializedMapFeatures(Set<Feature<?>> mapFeatures) {
-    Set<Feature<?>> derivedFeatures = Helpers.copyToSet(mapFeatures);
+    Set<Feature<?>> derivedFeatures = copyToSet(mapFeatures);
     derivedFeatures.remove(CollectionFeature.SERIALIZABLE);
     derivedFeatures.remove(CollectionFeature.SERIALIZABLE_INCLUDING_VIEWS);
     return derivedFeatures;
@@ -190,8 +219,8 @@ public class MapTestSuiteBuilder<K, V>
 
   public static Set<Feature<?>> computeCommonDerivedCollectionFeatures(
       Set<Feature<?>> mapFeatures) {
-    mapFeatures = new HashSet<Feature<?>>(mapFeatures);
-    Set<Feature<?>> derivedFeatures = new HashSet<Feature<?>>();
+    mapFeatures = new HashSet<>(mapFeatures);
+    Set<Feature<?>> derivedFeatures = new HashSet<>();
     mapFeatures.remove(CollectionFeature.SERIALIZABLE);
     if (mapFeatures.remove(CollectionFeature.SERIALIZABLE_INCLUDING_VIEWS)) {
       derivedFeatures.add(CollectionFeature.SERIALIZABLE);
@@ -221,25 +250,24 @@ public class MapTestSuiteBuilder<K, V>
   }
 
   private static class ReserializedMapGenerator<K, V> implements TestMapGenerator<K, V> {
-    private final OneSizeTestContainerGenerator<Map<K, V>, Map.Entry<K, V>> mapGenerator;
+    private final OneSizeTestContainerGenerator<Map<K, V>, Entry<K, V>> mapGenerator;
 
-    public ReserializedMapGenerator(
-        OneSizeTestContainerGenerator<Map<K, V>, Map.Entry<K, V>> mapGenerator) {
+    ReserializedMapGenerator(OneSizeTestContainerGenerator<Map<K, V>, Entry<K, V>> mapGenerator) {
       this.mapGenerator = mapGenerator;
     }
 
     @Override
-    public SampleElements<Map.Entry<K, V>> samples() {
+    public SampleElements<Entry<K, V>> samples() {
       return mapGenerator.samples();
     }
 
     @Override
-    public Map.Entry<K, V>[] createArray(int length) {
+    public Entry<K, V>[] createArray(int length) {
       return mapGenerator.createArray(length);
     }
 
     @Override
-    public Iterable<Map.Entry<K, V>> order(List<Map.Entry<K, V>> insertionOrder) {
+    public Iterable<Entry<K, V>> order(List<Entry<K, V>> insertionOrder) {
       return mapGenerator.order(insertionOrder);
     }
 

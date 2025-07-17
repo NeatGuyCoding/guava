@@ -17,16 +17,21 @@
 package com.google.common.collect;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Iterators.singletonIterator;
+import static java.util.Collections.singleton;
 
 import com.google.common.annotations.GwtCompatible;
+import com.google.common.annotations.GwtIncompatible;
+import com.google.common.annotations.J2ktIncompatible;
 import com.google.common.base.Preconditions;
+import java.util.Spliterator;
 
 /**
  * Implementation of {@link ImmutableList} with exactly one element.
  *
  * @author Hayward Chan
  */
-@GwtCompatible(serializable = true, emulated = true)
+@GwtCompatible(emulated = true)
 @SuppressWarnings("serial") // uses writeReplace(), not default serialization
 final class SingletonImmutableList<E> extends ImmutableList<E> {
 
@@ -44,7 +49,12 @@ final class SingletonImmutableList<E> extends ImmutableList<E> {
 
   @Override
   public UnmodifiableIterator<E> iterator() {
-    return Iterators.singletonIterator(element);
+    return singletonIterator(element);
+  }
+
+  @Override
+  public Spliterator<E> spliterator() {
+    return singleton(element).spliterator();
   }
 
   @Override
@@ -60,16 +70,20 @@ final class SingletonImmutableList<E> extends ImmutableList<E> {
 
   @Override
   public String toString() {
-    String elementToString = element.toString();
-    return new StringBuilder(elementToString.length() + 2)
-        .append('[')
-        .append(elementToString)
-        .append(']')
-        .toString();
+    return '[' + element.toString() + ']';
   }
 
   @Override
   boolean isPartialView() {
     return false;
+  }
+
+  // redeclare to help optimizers with b/310253115
+  @SuppressWarnings("RedundantOverride")
+  @Override
+  @J2ktIncompatible
+  @GwtIncompatible
+    Object writeReplace() {
+    return super.writeReplace();
   }
 }
